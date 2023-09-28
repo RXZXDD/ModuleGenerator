@@ -1,4 +1,52 @@
-# 1.input
+# How to Use?
+## *Way-1*: 
+
+1.Build project. 
+
+2.Run .exe in console like: 
+```batch
+	ModuleGenerator.exe ModuleName=[YourModuleName] Path=[Your New Module Path]
+
+ 	i.e. ModuleGenerator.exe ModuleName=TestD Path=E:\UEProject\PakTest\Plugins\ComputeShaderTestPlugin\Source
+``` 
+
+ --- 
+ ## *Way-2(having some issue,working on)*: 
+
+  1.Install Setup.exe 
+
+  2.Go to the Install folder Find Env.bat  
+
+  3.Run the batch 
+  
+  <font color="Red">Just Add  install path to system environment variables, so Check system environment variables PATH contains the install path or not, 
+  
+  if not pleae add it manually</font> 
+
+  later will fixed this problem (maybe)
+
+  4.Run .exe in PowerShell like: 
+  ```
+	ModuleGenerator.exe ModuleName=[YourModuleName] Path=[Your New Module Path]
+
+ 	i.e. ModuleGenerator.exe ModuleName=TestD Path=E:\UEProject\PakTest\Plugins\ComputeShaderTestPlugin\Source
+ ``` 
+   ---
+  <br>
+ <br>
+ <br>
+
+# TODO List
+1. auto add system enviroment value when install
+
+
+  ---
+  <br>
+ <br>
+ <br>
+
+  # Require doc
+## 1.input
 - 1-1 [ModuleName]
 
 - 1-2 [Path] 
@@ -7,7 +55,7 @@
 
         E:\UEProject\[YourProject]\Plugins\[PlguinName]
 
-# 2.Output
+## 2.Output
 - 2-1 **NewBlankModule** 
 
         Locate at: E:\UEProject\[YourProject]\Plugins\[PlguinName]\Source\[ModuleName] 
@@ -22,9 +70,9 @@
             |- [ModuleName].h
         |-[ModuleName].Build.cs 
 
-# 3.Content
+## 3.Content
 
-## 3-1 [ModuleName].Build.cs 
+### 3-1 [ModuleName].Build.cs 
 
 ```c++
 
@@ -82,7 +130,7 @@ public class [ModuleName] : ModuleRules
 
 ```
   
- ## 3-3 [ModuleName].h
+ ### 3-3 [ModuleName].h
 
  ```c++
 // Copyright Epic Games, Inc. All Rights Reserved.
@@ -107,7 +155,7 @@ public:
 
 
 
- ## 3-3 [ModuleName].cpp
+ ### 3-3 [ModuleName].cpp
 
  ```c++
  // Copyright Epic Games, Inc. All Rights Reserved.
