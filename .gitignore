@@ -1,0 +1,9 @@
+﻿################################################################################
+# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+
+/ModuleGenerator/.vs/ModuleGenerator/v16
+/ModuleGenerator/新建文件夹
+/ModuleGenerator/ModuleGenerator.exe
+/ModuleGenerator/x64/Debug
+/ModuleGenerator/TestPlugin/TestA

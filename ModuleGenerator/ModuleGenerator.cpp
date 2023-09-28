@@ -7,61 +7,254 @@
 #include <string.h>
 #include <regex>
 #include <vector>
+#include <iosfwd>
+#include <direct.h>
+#include <io.h>
+#include <Windows.h>
 
 using namespace std;
 
+#define BUILD_CS_FILENAME(ModuleName) ModuleName + ".Build.cs"
 
-vector<string> get_input(const int _argc, char** _argv)
+#define HEADER_FILENAME(ModuleName) ModuleName + ".h"
+
+#define CPP_FILENAME(ModuleName) ModuleName + ".cpp"
+
+#define BUILD_CS_TEMPLATE "/TemplateFile/Build_cs_template.txt"
+
+#define HEADER_TEMPLATE "/TemplateFile/Header_template.txt"
+
+#define CPP_TEMPLATE "/TemplateFile/Cpp_template.txt"
+
+//new module name
+static string module_name;
+
+//new module path
+static string path;
+
+//read template file path, default to exe path
+static string run_path;
+
+
+bool get_input(const int _argc, char** _argv)
 {
-	vector<string> OutParam(_argc, "");
-
 	string parttern("=");
 	regex r(parttern);
 
-	for (size_t i = 0; i < _argc; i++)
+	for (size_t i = 1; i < _argc; i++)
 	{
 		string param(*(_argv + i));
 
 		vector<string> v(sregex_token_iterator(param.begin(), param.end(), r, -1), sregex_token_iterator());
-		for (auto re : v)
+		if (!v.empty())
 		{
-			cout << re << endl;
+			if (v[0]._Equal("ModuleName"))
+			{
+				//cout <<"module" << v[1].c_str() << endl;
+				module_name = v[1];
+			}
+			else if (v[0]._Equal("Path"))
+			{
+				path = v[1] + "\\" + module_name;
+				//cout <<"path" << v[1].c_str() << endl;
+			}
+			else
+			{
+				printf("unknown key %s", v[0].c_str());
+			}
 		}
-		//printf("%i get ( %s , %s) \n", i, result[1].str(), result[2].str());
 
 	}
 
-	string param("a=b=c=d");
 
-	vector<string> v(sregex_token_iterator(param.begin(), param.end(), r, -1), sregex_token_iterator());
-	for (auto re : v)
-	{
-		cout << re << endl;
-	}
-
-	int* a = new int[]{1, 5, 6, 8, 9};
-	int b = *(a+2);
-	int c = sizeof(a) / sizeof(int*);
-	int d = _msize(a) /sizeof(int);
-	vector<int> vv(d);
-	for (auto re : vv)
-	{
-		cout << re << endl;
-	}
-	return OutParam;
+	return !module_name.empty() && !path.empty();
 }
 
+//replace [ModuleName] in template file
+string ReplaceChunk(const char* in_buffer)
+{
+	string line(in_buffer);
+	string parttern("[ModuleName]");
+	size_t idx = line.find(parttern);
+
+	while (idx < line.length())
+	{
+		line.replace(idx, parttern.length(), module_name);
+		idx = line.find(parttern);
+	}
+
+	return line;
+}
+
+bool create_build_cs()
+{
+	ifstream in(run_path + BUILD_CS_TEMPLATE);
+	if (in.fail())
+	{
+		std::cout << "build cs read failed" << endl;
+		return false;
+	}
+
+	string full_path = regex_replace(path, regex("\\\\"), "/") + "/";
+	if (_access(full_path.c_str(), 0) == -1)
+	{
+		if (-1 == _mkdir(full_path.c_str()))
+		{
+			std::cout << "path create failed" << endl;
+
+			return false;
+		}
+	}
+	
+	string full_file_name = full_path + "/" + BUILD_CS_FILENAME(module_name);
+
+	ofstream out(full_file_name);
+
+	if (!out.is_open())
+	{
+		std::cout << "create failed" << endl;
+		return false;
+	}
+
+	char buff[1024] = { 0 };
+	while (in.getline(buff, sizeof(buff)))
+	{
+		//cout << buff << endl;
+		out << ReplaceChunk(buff).c_str() << endl;
+	}
+	out.close();
+
+	std::cout << BUILD_CS_FILENAME(module_name) << " created at " << full_file_name << endl;
+
+	return true;
+}
+
+bool create_header()
+{
+	ifstream in(run_path + HEADER_TEMPLATE);
+	if (in.fail())
+	{
+		std::cout << "header tmplate read failed" << endl;
+		return false;
+	}
+
+	string full_path = path + "\\Public\\";
+
+	full_path = regex_replace(full_path, regex("\\\\"), "/");
+
+	if (_access(full_path.c_str(), 0) == -1)
+	{
+		if (-1 == _mkdir(full_path.c_str()))
+		{
+			std::cout << "path create failed" << endl;
+
+			return false;
+		}
+	}
+
+	string full_file_name = full_path + HEADER_FILENAME(module_name);
+
+
+	ofstream out(full_file_name);
+
+	if (!out.is_open())
+	{
+		std::cout << "create new file failed" << endl;
+		return false;
+	}
+
+	char buff[1024] = { 0 };
+	while (in.getline(buff, sizeof(buff)))
+	{
+		//cout << buff << endl;
+		out << ReplaceChunk(buff).c_str() << endl;
+	}
+	out.close();
+
+	std::cout << HEADER_FILENAME(module_name) << " created at " << full_file_name  << endl;
+
+	return true;
+}
+
+bool create_cpp()
+{
+	ifstream in(run_path + CPP_TEMPLATE);
+	if (in.fail())
+	{
+		std::cout << "header tmplate read failed" << endl;
+		return false;
+	}
+	string full_path = path + "\\Private\\";
+
+	full_path = regex_replace(full_path, regex("\\\\"), "/");
+
+	string full_file_name = full_path + CPP_FILENAME(module_name);
+
+	if (_access(full_path.c_str(), 0) == -1)
+	{
+		if (-1 == _mkdir(full_path.c_str()))
+		{
+			std::cout << "path create failed" << endl;
+
+			return false;
+		}
+	}
+
+	ofstream out(full_file_name);
+
+	if (!out.is_open())
+	{
+		std::cout << "create new file failed" << endl;
+		return false;
+	}
+
+	char buff[1024] = { 0 };
+	while (in.getline(buff, sizeof(buff)))
+	{
+		//cout << buff << endl;
+		out << ReplaceChunk(buff).c_str() << endl;
+	}
+	out.close();
+
+	std::cout << CPP_FILENAME(module_name) << " created at " << full_file_name  << endl;
+
+	return true;
+}
 
 int main(int argc, char** argv)
 {
-	/*for (size_t i = 0; i < argc; i++)
+	
+	if (!get_input(argc, argv))
 	{
-		printf("%i ,arvg == %s, *arvg == %p \n", i, *(argv+i), **argv);
-	}*/
+		cout << "no input arg... 请输入参数 ModuleName=[新模块名] Path=[新模块产出路径]";
+		system("pause");
+		return 0;
+	}
+
+	char _runPath[MAX_PATH];
+	GetModuleFileName(NULL, (LPSTR)_runPath, MAX_PATH);
+
+	string RunPath(_runPath);
+
+	size_t pos = RunPath.find("\\ModuleGenerator.exe");
+	RunPath.replace(pos, strlen("\\ModuleGenerator.exe"), "");
+
+	//cout << "--" << RunPath << endl;
+
+	run_path = regex_replace(RunPath, regex("\\\\"), "/");
+
+	create_build_cs();
+	create_header();
+	create_cpp();
+
+	//string tmp;
+	//while (in >> tmp)
+	//{
+	//	cout << tmp << endl;
+	//}
 	
-	auto out_param = get_input(argc, argv);
 	
-	system("pause");
+	//system("pause");
 
 	return 0;
 }
